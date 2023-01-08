@@ -29,6 +29,13 @@ func Fetch(url string) ([]string, error) {
 		return nil, fmt.Errorf("parsing %s as HTML: %v", url, err)
 	}
 
+	links := extract(htmlDoc, response)
+
+	return links, nil
+}
+
+// Extracts anchor links from html dom.
+func extract(htmlDoc *html.Node, response *http.Response) []string {
 	var links []string
 	visitNode := func(node *html.Node) {
 		if node.Type == html.ElementNode && node.Data == "a" {
@@ -36,9 +43,15 @@ func Fetch(url string) ([]string, error) {
 				if attribute.Key != "href" {
 					continue
 				}
+				// Exclude telephone numbers
 				if strings.HasPrefix(attribute.Val, "#") || strings.HasPrefix(attribute.Val, "tel") {
 					continue
 				}
+				// Skip links to image resources.
+				if isImageLink(attribute.Val) {
+					continue
+				}
+
 				link, err := response.Request.URL.Parse(attribute.Val)
 				if err != nil {
 					continue
@@ -48,8 +61,7 @@ func Fetch(url string) ([]string, error) {
 		}
 	}
 	forEachNode(htmlDoc, visitNode, nil)
-
-	return links, nil
+	return links
 }
 
 func forEachNode(node *html.Node, pre, post func(node *html.Node)) {
@@ -62,4 +74,16 @@ func forEachNode(node *html.Node, pre, post func(node *html.Node)) {
 	if post != nil {
 		post(node)
 	}
+}
+
+// Check if href value links to an image resource.
+func isImageLink(hrefValue string) bool {
+	imgExtensions := []string{".jpg", ".jpeg", ".png", ".gif", ".svg", ".tiff", ".ico"}
+
+	for _, ext := range imgExtensions {
+		if strings.HasSuffix(strings.ToLower(hrefValue), ext) {
+			return true
+		}
+	}
+	return false
 }

@@ -8,7 +8,11 @@ import (
 
 func main() {
 	start := time.Now()
-	crawl.Init()
+
+	//url := "https://spinningcode.org/"
+	url := "https://zietlow.io/"
+
+	crawl.Init(url)
 
 	elapsed := time.Since(start)
 	fmt.Printf("\n\nComplete in %s", elapsed)
