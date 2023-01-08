@@ -20,7 +20,7 @@ func Fetch(url string) ([]string, error) {
 
 	if response.StatusCode != http.StatusOK {
 		response.Body.Close()
-		return nil, fmt.Errorf("gettings %s: %s", url, response.Status)
+		return nil, fmt.Errorf("Having issues getting %s: %s", url, response.Status)
 	}
 
 	htmlDoc, err := html.Parse(response.Body)
