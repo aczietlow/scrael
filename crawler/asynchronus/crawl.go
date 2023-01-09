@@ -55,7 +55,7 @@ func work(urls []string, host string, locks chan struct{}) {
 
 func crawl(url string, concurrencyLocks chan struct{}) []string {
 	fmt.Println(url)
-	// Pass empty struct to claim one of the available locks.
+	// Send empty struct to claim one of the available locks.
 	concurrencyLocks <- struct{}{}
 	list, err := links.Fetch(url)
 	// Release the lock.
