@@ -6,6 +6,7 @@
 * [x] Refactor code to use basic runtime config to change settings more easily.
 * [x] Refactor the crawler to support concurrency
 * [ ] Unit tests.
+* [ ] Add output formats
 
 ## Web Crawler
 
