@@ -26,6 +26,16 @@ func TestGetH1FromHtml(t *testing.T) {
 				"Welcome to Boot.dev",
 			},
 		},
+		{
+			name:             "no headings",
+			inputHtml:        "<html><p>hi mom</p></html>",
+			expectedHeadings: []string{""},
+		},
+		{
+			name:             "single heading",
+			inputHtml:        "<h1>lonely heading</h1>",
+			expectedHeadings: []string{"lonely heading"},
+		},
 	}
 
 	for i, tc := range tests {
@@ -35,9 +45,14 @@ func TestGetH1FromHtml(t *testing.T) {
 				t.Errorf("Test %d - %s Fail: Unexpected error: %v", i, tc.name, err)
 				return
 			}
-			if actual != tc.expectedHeadings {
-				t.Errorf("Test %d - %s Fail: Didn't find expected headings\nexpected: %v\nactual: %v", i, tc.name, tc.expectedHeadings, actual)
+			if len(actual) != len(tc.expectedHeadings) {
+				t.Errorf("Test %d - %s Fail: Found an unexpected number of H1 tages. Expected: %d, Actual: %d", i, tc.name, len(tc.expectedHeadings), len(actual))
 				return
+			}
+			for i, heading := range actual {
+				if heading != tc.expectedHeadings[i] {
+					t.Errorf("Test %d - %s Fail: Didn't find expected headings\nexpected: %v\nactual: %v", i, tc.name, tc.expectedHeadings[i], heading)
+				}
 			}
 		})
 
@@ -45,3 +60,47 @@ func TestGetH1FromHtml(t *testing.T) {
 
 }
 
+func TestGetFirstParagraphFromHtml(t *testing.T) {
+	inputBody := `<html><body>
+		<p>Outside paragraph.</p>
+		<main>
+			<p>Main paragraph.</p>
+		</main>
+	</body></html>`
+
+	tests := []struct {
+		name                  string
+		inputHtml             string
+		expectedParagraphText string
+	}{
+		{
+			name:                  "find first paragraph",
+			inputHtml:             inputBody,
+			expectedParagraphText: "Outside paragraph.",
+		},
+		{
+			name:                  "no paragraphs",
+			inputHtml:             "<html><h1>hi mom</h1></html>",
+			expectedParagraphText: "",
+		},
+		{
+			name:                  "single paragraph node",
+			inputHtml:             "<p>lonely paragraph</p>",
+			expectedParagraphText: "lonely paragraph",
+		},
+	}
+
+	for i, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			actual, err := getFirstParagraphFromHTML(tc.inputHtml)
+			if err != nil {
+				t.Errorf("Test %d - %s Fail: Unexpected error: %v", i, tc.name, err)
+				return
+			}
+			if actual != tc.expectedParagraphText {
+				t.Errorf("Test %d - %s Fail: paragraph text did not match expected result: expected: %s Actual: %s", i, tc.name, tc.expectedParagraphText, actual)
+			}
+		})
+	}
+
+}
