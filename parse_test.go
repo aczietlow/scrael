@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"net/url"
+	"testing"
+)
 
 func TestGetH1FromHtml(t *testing.T) {
 
@@ -60,7 +63,7 @@ func TestGetH1FromHtml(t *testing.T) {
 
 }
 
-func TestGetFirstParagraphFromHtml(t *testing.T) {
+func TestGetFirstaragraphFromHtml(t *testing.T) {
 	inputBody := `<html><body>
 		<p>Outside paragraph.</p>
 		<main>
@@ -102,5 +105,47 @@ func TestGetFirstParagraphFromHtml(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestGetURLsFromHtml(t *testing.T) {
+	baseUrl, err := url.Parse("https://zietlow.io")
+	if err != nil {
+		t.Error(err)
+	}
+	tests := []struct {
+		name         string
+		inputHtml    string
+		expectedUrls []string
+	}{
+		{
+			name:         "find single url",
+			inputHtml:    `<a href="https://zietlow.io/foo">bar</a>`,
+			expectedUrls: []string{"/foo"},
+		},
+		{
+			name: "multiple urls",
+			inputHtml: `
+			<body>
+				<a href="https://zietlow.io/foo">bar</a>
+				<p>some stuff happens</p>"
+				<a href="https://zietlow.io/boo">ghosts</a>
+			</body>`,
+			expectedUrls: []string{"/foo", "/boo"},
+		},
+	}
+
+	for i, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			actual, err := getURLsFromHtml(tc.inputHtml, baseUrl)
+			if err != nil {
+				t.Errorf("Test %d - %s Fail: Unexpected error: %v", i, tc.name, err)
+				return
+			}
+			if len(actual) != len(tc.expectedUrls) {
+				t.Errorf("Test %d - %s Fail: Returned a different number of URLs. Expected - %d Actual - %d", i, tc.name, len(tc.expectedUrls), len(actual))
+				t.Errorf("\ntest output:\n%v", actual)
+				return
+			}
+		})
+	}
 }
