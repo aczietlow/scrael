@@ -21,24 +21,22 @@ func TestGetH1FromHtml(t *testing.T) {
 	tests := []struct {
 		name             string
 		inputHtml        string
-		expectedHeadings []string
+		expectedHeadings string
 	}{
 		{
-			name:      "single heading",
-			inputHtml: page1,
-			expectedHeadings: []string{
-				"Welcome to Boot.dev",
-			},
+			name:             "single heading",
+			inputHtml:        page1,
+			expectedHeadings: "Welcome to Boot.dev",
 		},
 		{
 			name:             "no headings",
 			inputHtml:        "<html><p>hi mom</p></html>",
-			expectedHeadings: []string{""},
+			expectedHeadings: "",
 		},
 		{
 			name:             "single heading",
 			inputHtml:        "<h1>lonely heading</h1>",
-			expectedHeadings: []string{"lonely heading"},
+			expectedHeadings: "lonely heading",
 		},
 	}
 
@@ -49,14 +47,8 @@ func TestGetH1FromHtml(t *testing.T) {
 				t.Errorf("Test %d - %s Fail: Unexpected error: %v", i, tc.name, err)
 				return
 			}
-			if len(actual) != len(tc.expectedHeadings) {
-				t.Errorf("Test %d - %s Fail: Found an unexpected number of H1 tages. Expected: %d, Actual: %d", i, tc.name, len(tc.expectedHeadings), len(actual))
-				return
-			}
-			for i, heading := range actual {
-				if heading != tc.expectedHeadings[i] {
-					t.Errorf("Test %d - %s Fail: Didn't find expected headings\nexpected: %v\nactual: %v", i, tc.name, tc.expectedHeadings[i], heading)
-				}
+			if actual != tc.expectedHeadings {
+				t.Errorf("Test %d - %s Fail: Didn't find expected headings\nexpected: %v\nactual: %v", i, tc.name, tc.expectedHeadings, actual)
 			}
 		})
 
