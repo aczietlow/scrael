@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/url"
 	"strings"
@@ -9,16 +8,16 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-func getH1FromHtml(html string) ([]string, error) {
+func getH1FromHtml(html string) (string, error) {
 
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
 	if err != nil {
-		return []string{}, err
+		return "", err
 	}
 
-	header := doc.Find("h1").Text()
+	header := doc.Find("h1").First().Text()
 
-	return []string{header}, nil
+	return header, nil
 }
 
 func getFirstParagraphFromHTML(html string) (string, error) {
@@ -63,7 +62,6 @@ func getImagesFromHtml(htmlBody string, baseURL *url.URL) ([]string, error) {
 		return []string{}, err
 	}
 	doc.Find("img").Each(func(_ int, s *goquery.Selection) {
-		fmt.Println("found image")
 		if src, exists := s.Attr("src"); exists {
 			u, err := url.Parse(src)
 			if err != nil {
