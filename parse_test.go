@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/url"
+	"reflect"
 	"testing"
 )
 
@@ -110,7 +111,7 @@ func TestGetFirstaragraphFromHtml(t *testing.T) {
 func TestGetURLsFromHtml(t *testing.T) {
 	baseUrl, err := url.Parse("https://zietlow.io")
 	if err != nil {
-		t.Error(err)
+		t.Errorf("Failed parsing Url: %v", baseUrl)
 	}
 	tests := []struct {
 		name         string
@@ -120,17 +121,22 @@ func TestGetURLsFromHtml(t *testing.T) {
 		{
 			name:         "find single url",
 			inputHtml:    `<a href="https://zietlow.io/foo">bar</a>`,
-			expectedUrls: []string{"/foo"},
+			expectedUrls: []string{"https://zietlow.io/foo"},
 		},
 		{
 			name: "multiple urls",
 			inputHtml: `
 			<body>
-				<a href="https://zietlow.io/foo">bar</a>
+				<a href="/foo">bar</a>
 				<p>some stuff happens</p>"
 				<a href="https://zietlow.io/boo">ghosts</a>
 			</body>`,
-			expectedUrls: []string{"/foo", "/boo"},
+			expectedUrls: []string{"https://zietlow.io/foo", "https://zietlow.io/boo"},
+		},
+		{
+			name:         "no urls present",
+			inputHtml:    "<p>this is just a paragraph</p>",
+			expectedUrls: []string{},
 		},
 	}
 
@@ -143,8 +149,59 @@ func TestGetURLsFromHtml(t *testing.T) {
 			}
 			if len(actual) != len(tc.expectedUrls) {
 				t.Errorf("Test %d - %s Fail: Returned a different number of URLs. Expected - %d Actual - %d", i, tc.name, len(tc.expectedUrls), len(actual))
-				t.Errorf("\ntest output:\n%v", actual)
 				return
+			}
+			if !reflect.DeepEqual(actual, tc.expectedUrls) {
+				t.Errorf("expected %v, got %v", tc.expectedUrls, actual)
+			}
+		})
+	}
+}
+
+func TestGetImagesFromHtml(t *testing.T) {
+	baseUrl, err := url.Parse("https://zietlow.io")
+	if err != nil {
+		t.Errorf("Failed parsing Url: %v", baseUrl)
+	}
+
+	tests := []struct {
+		name      string
+		inputHtml string
+		expected  []string
+	}{
+		{
+			name:      "fetch single image",
+			inputHtml: `<html><body><img src="/logo.png" alt="logo"></body></html>`,
+			expected:  []string{"https://zietlow.io/logo.png"},
+		},
+		{
+			name: "multiple imgs",
+			inputHtml: `
+			<body>
+				<img src="/logo.png" alt="logo">
+				<img src="https://zietlow.io/face.png" alt="face">
+				<img alt="false flag">
+			</body>`,
+			expected: []string{"https://zietlow.io/logo.png", "https://zietlow.io/face.png"},
+		},
+		{
+			name:      "no imgs present",
+			inputHtml: "<p>this is just a paragraph</p>",
+			expected:  []string{},
+		},
+	}
+
+	for i, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			actual, err := getImagesFromHtml(tc.inputHtml, baseUrl)
+			if err != nil {
+				t.Errorf("Test %d -  %s Fail: Unexpected Error: %v", i, tc.name, err)
+			}
+			if len(actual) != len(tc.expected) {
+				t.Errorf("Test %d - %s Fail: Returned a different number of URLs. Expected - %d Actual - %d", i, tc.name, len(tc.expected), len(actual))
+			}
+			if !reflect.DeepEqual(actual, tc.expected) {
+				t.Errorf("expected %v, got %v", tc.expected, actual)
 			}
 		})
 	}
