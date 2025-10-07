@@ -1,11 +1,12 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -18,10 +19,11 @@ func main() {
 		fmt.Printf("too many arguments provided")
 		os.Exit(1)
 	}
-	fmt.Printf("starting crawl of: %s", args[0])
+	fmt.Printf("starting crawl of: %s\n", args[0])
 
 	h, err := getHtml(args[0])
 	if err != nil {
+		log.Println(err)
 		os.Exit(1)
 	}
 
@@ -30,24 +32,25 @@ func main() {
 
 func getHtml(rawUrl string) (string, error) {
 	c := &http.Client{}
-	req, err := http.NewRequest("Get", rawUrl, nil)
+	req, err := http.NewRequest("GET", rawUrl, nil)
 	if err != nil {
 		return "", err
 	}
-	req.Header.Add("User-Agent", "ScraelCrawler/1.0")
+	req.Header.Set("User-Agent", "ScraelCrawler/1.0")
 	resp, err := c.Do(req)
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode > 400 {
-		err := errors.New("Encountered an http error from server")
+	if resp.StatusCode >= 400 {
+		err := fmt.Errorf("Encountered an http error from server: %v", resp.Status)
 		return "", err
 	}
 
-	if resp.Header.Get("Content-Type") != "text/html" {
-		err := errors.New("Server returned the wrong content type")
+	contentType := resp.Header.Get("Content-Type")
+	if !strings.HasPrefix(contentType, "text/html") {
+		err := fmt.Errorf("Server returned the wrong content type: %v", contentType)
 		return "", err
 	}
 
