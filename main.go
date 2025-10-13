@@ -1,8 +1,8 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 )
 
@@ -17,18 +17,14 @@ func main() {
 		os.Exit(1)
 	}
 	rawUrl := args[0]
-	u, err := normalizeURL(rawUrl)
-	if err != nil {
-		log.Println("Error when parsing URL:", err)
-	}
 
-	fmt.Printf("starting crawl of: %s\n", u)
+	// fmt.Printf("starting crawl of: %s\n", rawUrl)
 
-	h, err := getHtml(rawUrl)
-	if err != nil {
-		log.Println(err)
-		os.Exit(1)
-	}
+	pageMap := make(map[string]int)
 
-	fmt.Printf("\n%v", h)
+	crawlPage(rawUrl, "", pageMap)
+
+	prettyList, _ := json.MarshalIndent(pageMap, "", "  ")
+	fmt.Printf("%s", string(prettyList))
+
 }
