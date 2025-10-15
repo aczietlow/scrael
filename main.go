@@ -1,8 +1,8 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 )
 
@@ -16,15 +16,25 @@ func main() {
 		fmt.Printf("too many arguments provided")
 		os.Exit(1)
 	}
-	rawUrl := args[0]
 
-	// fmt.Printf("starting crawl of: %s\n", rawUrl)
+	conf, err := newConfig(args[0], 1)
 
-	pageMap := make(map[string]int)
+	if err != nil {
+		log.Println("Failed to bootsrap app.", err)
+		os.Exit(1)
+	}
 
-	crawlPage(rawUrl, "", pageMap)
+	conf.wg.Add(1)
+	go conf.crawlPage(conf.baseUrl.String())
+	conf.wg.Wait()
 
-	prettyList, _ := json.MarshalIndent(pageMap, "", "  ")
-	fmt.Printf("%s", string(prettyList))
+	// prettyList, _ := json.MarshalIndent(conf.pages, "", "  ")
+	// fmt.Printf("%s", string(prettyList))
+	for normalizedURL, page := range conf.pages {
+		fmt.Printf("urls on page: %s\n", normalizedURL)
+		for i, url := range page.outgoingLinks {
+			fmt.Printf("%d - %s\n", i, url)
+		}
+	}
 
 }

@@ -36,13 +36,11 @@ func extractPageData(html, pageUrl string) PageData {
 		log.Fatalf("Failed fetching images %v", err)
 	}
 
-	pd := PageData{
+	return PageData{
 		Url:            pageUrl,
 		H1:             heading,
 		FirstParagraph: paragraph,
 		outgoingLinks:  links,
 		imageUrl:       images,
 	}
-
-	return pd
 }

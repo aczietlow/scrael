@@ -1,22 +1,18 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/url"
-	"os"
 )
 
-func crawlPage(rawBaseUrl, rawCurrentUrl string, pages map[string]int) {
-	if rawCurrentUrl == "" {
-		rawCurrentUrl = rawBaseUrl
-	}
+func (cfg *config) crawlPage(rawCurrentUrl string) {
 
-	baseUrl, err := url.Parse(rawBaseUrl)
-	if err != nil {
-		log.Println("Failed parsing the base Url", err)
-		return
-	}
+	cfg.concurrencyControl <- struct{}{}
+
+	defer func() {
+		<-cfg.concurrencyControl
+		cfg.wg.Done()
+	}()
 
 	currentUrl, err := url.Parse(rawCurrentUrl)
 	if err != nil {
@@ -24,7 +20,8 @@ func crawlPage(rawBaseUrl, rawCurrentUrl string, pages map[string]int) {
 		return
 	}
 
-	if baseUrl.Hostname() != currentUrl.Hostname() {
+	if cfg.baseUrl.Hostname() != currentUrl.Hostname() {
+		// Only crawl pages that belong to the same host
 		return
 	}
 
@@ -33,13 +30,11 @@ func crawlPage(rawBaseUrl, rawCurrentUrl string, pages map[string]int) {
 		log.Println("Failed normalizing the Url", err)
 	}
 
-	pages[normalizedUrl]++
-	// if _, exists := pages[normalizedUrl]; exists {
-	// 	pages[normalizedUrl]++
-	// 	return
-	// }
-
-	fmt.Printf("Crawling %s \n", rawCurrentUrl)
+	isFirstVisit := cfg.addPageVist(normalizedUrl)
+	if !isFirstVisit {
+		// don't fetch pages more than once
+		return
+	}
 
 	h, err := getHtml(rawCurrentUrl)
 	if err != nil {
@@ -47,23 +42,36 @@ func crawlPage(rawBaseUrl, rawCurrentUrl string, pages map[string]int) {
 		return
 	}
 
-	urls, err := getURLsFromHtml(h, currentUrl)
-	if err != nil {
-		log.Println(err)
-		os.Exit(1)
-	}
+	pd := extractPageData(h, rawCurrentUrl)
+	cfg.setpageData(normalizedUrl, pd)
 
-	for _, url := range urls {
-		urlRef, err := normalizeURL(url)
+	for _, url := range pd.outgoingLinks {
+		urlNormalized, err := normalizeURL(url)
 		if err != nil {
 			log.Println("Failed normalizing the Url", err)
 			continue
 		}
 
-		if _, exists := pages[urlRef]; exists {
-			pages[urlRef]++
-		} else {
-			crawlPage(rawBaseUrl, url, pages)
+		if _, exists := cfg.pages[urlNormalized]; !exists {
+			cfg.wg.Add(1)
+			go cfg.crawlPage(url)
 		}
 	}
+}
+
+func (cfg *config) setpageData(normalizedUrl string, pd PageData) {
+	cfg.mu.Lock()
+	defer cfg.mu.Unlock()
+	cfg.pages[normalizedUrl] = pd
+}
+
+func (cfg *config) addPageVist(normalizedUrl string) (isFirst bool) {
+	cfg.mu.Lock()
+	defer cfg.mu.Unlock()
+	if _, exists := cfg.pages[normalizedUrl]; exists {
+		return false
+	}
+	cfg.pages[normalizedUrl] = PageData{}
+
+	return true
 }
