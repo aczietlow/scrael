@@ -31,13 +31,18 @@ func main() {
 	// prettyList, _ := json.MarshalIndent(conf.pages, "", "  ")
 	// fmt.Printf("%s", string(prettyList))
 
-	count := 1
-	for normalizedURL, page := range conf.pages {
-		fmt.Printf("[%d] urls on page: %s\n", count, normalizedURL)
-		count++
-		for i, url := range page.outgoingLinks {
-			fmt.Printf("%d - %s\n", i+1, url)
-		}
+	//
+	// count := 1
+	// for normalizedURL, page := range conf.pages {
+	// 	fmt.Printf("[%d] urls on page: %s\n", count, normalizedURL)
+	// 	count++
+	// 	for i, url := range page.outgoingLinks {
+	// 		fmt.Printf("%d - %s\n", i+1, url)
+	// 	}
+	// }
+
+	if err := writeCsvReport(conf.pages, "report.csv"); err != nil {
+		log.Println("Failed generating report", err)
 	}
 
 	fmt.Printf("total pages crawled %d\n", len(conf.pages))
