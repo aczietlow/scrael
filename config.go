@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/url"
+	"strconv"
 	"sync"
 )
 
@@ -10,12 +11,23 @@ type config struct {
 	baseUrl            *url.URL
 	mu                 *sync.Mutex
 	concurrencyControl chan struct{}
+	maxPages           int
 	wg                 *sync.WaitGroup
 }
 
-func newConfig(baseRawUrl string, maxCurrency int) (config, error) {
+func newConfig(baseRawUrl string, rawMaxCurrency, rawMaxPages string) (config, error) {
 
 	baseUrl, err := url.Parse(baseRawUrl)
+	if err != nil {
+		return config{}, err
+	}
+
+	maxCurrency, err := strconv.Atoi(rawMaxCurrency)
+	if err != nil {
+		return config{}, err
+	}
+
+	maxPages, err := strconv.Atoi(rawMaxPages)
 	if err != nil {
 		return config{}, err
 	}
@@ -25,6 +37,7 @@ func newConfig(baseRawUrl string, maxCurrency int) (config, error) {
 		baseUrl:            baseUrl,
 		mu:                 &sync.Mutex{},
 		concurrencyControl: make(chan struct{}, maxCurrency),
+		maxPages:           maxPages,
 		wg:                 &sync.WaitGroup{},
 	}
 

@@ -8,6 +8,10 @@ Web Crawler specifically intended use for load testing.
 
 ## Usage 
 
+arg 0 - base url to crawl
+arg 1 - number of conrrent workers
+arg 2 - max number of pages to crawl
+
 ```
-go run . https://zietlow.io
+go run . https://zietlow.io 5 100
 ```
