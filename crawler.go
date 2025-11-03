@@ -14,6 +14,11 @@ func (cfg *config) crawlPage(rawCurrentUrl string) {
 		cfg.wg.Done()
 	}()
 
+	if cfg.hasMaxPagesLimitBeenReached() {
+		// fmt.Println("Reached max page crawl limit")
+		return
+	}
+
 	currentUrl, err := url.Parse(rawCurrentUrl)
 	if err != nil {
 		log.Println("Failed parsing the current Url", err)
@@ -46,24 +51,17 @@ func (cfg *config) crawlPage(rawCurrentUrl string) {
 	cfg.setpageData(normalizedUrl, pd)
 
 	for _, url := range pd.outgoingLinks {
-		urlNormalized, err := normalizeURL(url)
+		outgoingUrlNormalized, err := normalizeURL(url)
 		if err != nil {
 			log.Println("Failed normalizing the Url", err)
 			continue
 		}
 
-		if cfg.hasPageAlreadyBeenCrawled(urlNormalized) {
+		if !cfg.hasPageAlreadyBeenCrawled(outgoingUrlNormalized) {
 			cfg.wg.Add(1)
 			go cfg.crawlPage(url)
 		}
 	}
-}
-
-func (cfg *config) hasPageAlreadyBeenCrawled(url string) bool {
-	cfg.mu.Lock()
-	defer cfg.mu.Unlock()
-	_, exists := cfg.pages[url]
-	return exists
 }
 
 func (cfg *config) setpageData(normalizedUrl string, pd PageData) {
@@ -81,4 +79,17 @@ func (cfg *config) addPageVist(normalizedUrl string) (isFirst bool) {
 	cfg.pages[normalizedUrl] = PageData{}
 
 	return true
+}
+
+func (cfg *config) hasPageAlreadyBeenCrawled(url string) bool {
+	cfg.mu.Lock()
+	defer cfg.mu.Unlock()
+	_, exists := cfg.pages[url]
+	return exists
+}
+
+func (cfg *config) hasMaxPagesLimitBeenReached() bool {
+	cfg.mu.Lock()
+	defer cfg.mu.Unlock()
+	return len(cfg.pages) >= cfg.maxPages
 }
