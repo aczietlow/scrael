@@ -52,11 +52,18 @@ func (cfg *config) crawlPage(rawCurrentUrl string) {
 			continue
 		}
 
-		if _, exists := cfg.pages[urlNormalized]; !exists {
+		if cfg.hasPageAlreadyBeenCrawled(urlNormalized) {
 			cfg.wg.Add(1)
 			go cfg.crawlPage(url)
 		}
 	}
+}
+
+func (cfg *config) hasPageAlreadyBeenCrawled(url string) bool {
+	cfg.mu.Lock()
+	defer cfg.mu.Unlock()
+	_, exists := cfg.pages[url]
+	return exists
 }
 
 func (cfg *config) setpageData(normalizedUrl string, pd PageData) {

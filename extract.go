@@ -16,24 +16,24 @@ type PageData struct {
 func extractPageData(html, pageUrl string) PageData {
 	u, err := url.Parse(pageUrl)
 	if err != nil {
-		log.Fatalf("Failed to parse url %v", err)
+		log.Printf("Failed to parse url %v", err)
 	}
 
 	heading, err := getH1FromHtml(html)
 	if err != nil {
-		log.Fatalf("Failed fetching heading %v", err)
+		log.Printf("Failed fetching heading %v", err)
 	}
 	paragraph, err := getFirstParagraphFromHTML(html)
 	if err != nil {
-		log.Fatalf("Failed fetching paragraph %v", err)
+		log.Printf("Failed fetching paragraph %v", err)
 	}
 	links, err := getURLsFromHtml(html, u)
 	if err != nil {
-		log.Fatalf("Failed fetching links %v", err)
+		log.Printf("Failed fetching links %v", err)
 	}
 	images, err := getImagesFromHtml(html, u)
 	if err != nil {
-		log.Fatalf("Failed fetching images %v", err)
+		log.Printf("Failed fetching images %v", err)
 	}
 
 	return PageData{
