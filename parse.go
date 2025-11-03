@@ -41,7 +41,7 @@ func getURLsFromHtml(htmlBody string, baseURL *url.URL) ([]string, error) {
 			// TODO: normalize rel and abs urls
 			u, err := url.Parse(href)
 			if err != nil {
-				log.Fatalf("Failed to parse url: %s", href)
+				log.Printf("Failed to parse url: %s", href)
 			}
 			if u.IsAbs() {
 				urls = append(urls, href)
@@ -65,7 +65,7 @@ func getImagesFromHtml(htmlBody string, baseURL *url.URL) ([]string, error) {
 		if src, exists := s.Attr("src"); exists {
 			u, err := url.Parse(src)
 			if err != nil {
-				log.Fatalf("Failed to parse url: %s", src)
+				log.Printf("Failed to parse url: %s", src)
 			}
 			if u.IsAbs() {
 				imgs = append(imgs, src)

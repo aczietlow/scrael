@@ -17,7 +17,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	conf, err := newConfig(args[0], 1)
+	conf, err := newConfig(args[0], 5)
 
 	if err != nil {
 		log.Println("Failed to bootsrap app.", err)
@@ -36,5 +36,4 @@ func main() {
 			fmt.Printf("%d - %s\n", i, url)
 		}
 	}
-
 }
