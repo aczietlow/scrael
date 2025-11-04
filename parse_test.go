@@ -130,6 +130,11 @@ func TestGetURLsFromHtml(t *testing.T) {
 			inputHtml:    "<p>this is just a paragraph</p>",
 			expectedUrls: []string{},
 		},
+		{
+			name:         "Url with a fragment",
+			inputHtml:    `<a href="#foo">Fragment Url</a>`,
+			expectedUrls: []string{},
+		},
 	}
 
 	for i, tc := range tests {

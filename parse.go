@@ -43,9 +43,10 @@ func getURLsFromHtml(htmlBody string, baseURL *url.URL) ([]string, error) {
 			if err != nil {
 				log.Printf("Failed to parse url: %s", href)
 			}
+
 			if u.IsAbs() {
 				urls = append(urls, href)
-			} else {
+			} else if !strings.HasPrefix(u.String(), "#") { // if href is just a #fragment, skip it
 				baseURL.Path = href
 				urls = append(urls, baseURL.String())
 			}
